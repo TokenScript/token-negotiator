@@ -85,9 +85,9 @@ export class AuthHandler {
 
 	private createIframe(){
 
-        const iframe = document.createElement('iframe');
-        iframe.setAttribute('allow',"clipboard-read");
-        this.iframe = iframe;
+		const iframe = document.createElement('iframe');
+		iframe.setAttribute('allow',"clipboard-read");
+		this.iframe = iframe;
 
 		iframe.src = this.attestationOrigin ?? "";
 		iframe.style.width = '800px';

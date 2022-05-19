@@ -64,7 +64,6 @@
 .overlay-tn.light .overlay-content-tn .headline-tn {
   font-weight: 700;
   color: #000000;
-  width: 100%;
 }
 
 .overlay-tn.light .headline-container-tn {
@@ -294,8 +293,17 @@
   position: absolute;
 }
 
+.overlay-tn .headline-container-tn {
+  display: flex;
+  align-items: center;
+}
+
 .overlay-tn .headline-container-tn p {
   margin: 1rem;
+}
+
+.dis-wallet-tn {
+  margin: 5px 10px;
 }
 
 .stl-tn {
@@ -347,12 +355,16 @@
 }
 
 .overlay-tn .overlay-content-tn .headline-tn {
-  width: 246px;
+  flex: 1;
   margin: 0;
-  padding: 21px 12px 13px 12px;
-  font-size: 1.2rem;
+  padding: 13px 12px;
+  font-size: 1rem;
   font-weight: bold;
   line-height: 1.71rem;
+}
+
+.overlay-tn .overlay-content-tn .token-name {
+  font-size: 1.2rem;
 }
 
 .overlay-tn .overlay-content-tn .token-container-tn {
@@ -594,7 +606,7 @@ li.token-tn, .load-more-tn {
   list-style-type: none;
 }
 
-.overlay-tn .opening-btn-tn, li.issuer-connect-banner-tn .connect-btn-tn, li.issuer-connect-banner-tn .tokens-btn-tn {
+.overlay-tn .opening-btn-tn, li.issuer-connect-banner-tn .connect-btn-tn, li.issuer-connect-banner-tn .tokens-btn-tn, .btn-tn {
   font-size: 0.75em;
   font-weight: 200;
   border: none;

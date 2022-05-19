@@ -208,12 +208,12 @@ export const getChallengeSigned = async (
 
 	// try {
 
-	let address = web3WalletProvider.getConnectedWalletData()[0].address;
+	let address = web3WalletProvider.getConnectedWallet().address;
 
 	if (!address) {
 		await web3WalletProvider.connect("MetaMask");
 
-		address = web3WalletProvider.getConnectedWalletData()[0].address;
+		address = web3WalletProvider.getConnectedWallet().address;
 	}
 
 	// if Passive Flow ( IF PASSIVE WORKS, REMOVE THIS CODE).
@@ -317,7 +317,7 @@ export const signMessageWithBrowserWallet = async (
 
 	return await web3WalletProvider.signWith(
 		message,
-		web3WalletProvider.getConnectedWalletData()[0]
+		web3WalletProvider.getConnectedWallet()
 	);
 };
 

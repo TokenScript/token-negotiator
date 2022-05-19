@@ -3,6 +3,7 @@ import {Start} from './views/start';
 import {requiredParams} from "../utils";
 import {Client} from "./index";
 import {ViewInterface, ViewConstructor, AbstractView} from "./views/view-interface";
+import {SelectIssuers} from "./views/select-issuers";
 
 export interface PopupOptionsInterface {
     openingHeading?: string,
@@ -67,7 +68,11 @@ export class Popup {
 
 			this.loadContainer.querySelector('.dismiss-error-tn').addEventListener('click', this.dismissLoader.bind(this));
 
-			this.updatePopup(Start);
+			if (this.client.web3WalletProvider.getConnectedWalletCount()){
+				this.updatePopup(SelectIssuers)
+			} else {
+				this.updatePopup(Start);
+			}
 
 		}
 	}
