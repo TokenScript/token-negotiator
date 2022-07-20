@@ -25,3 +25,4 @@ export interface BrowserDataInterface {
     imTokenAndroid: boolean;
 }
 export declare const isUserAgentSupported: (unsupportedDeviceAndBrowserConfig: any) => boolean;
+export declare const unSupportedUserAgents: string[];

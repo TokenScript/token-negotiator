@@ -45,3 +45,6 @@ export const isUserAgentSupported = (unsupportedDeviceAndBrowserConfig:any) => {
   });
   return broswerIsSupported;
 }
+
+// List of known browsers/platforms that are not supported.
+export  const unSupportedUserAgents: string [] = ["iE", "iE9"];

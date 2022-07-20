@@ -14,4 +14,5 @@ export var isUserAgentSupported = function (unsupportedDeviceAndBrowserConfig) {
     });
     return broswerIsSupported;
 };
+export var unSupportedUserAgents = ["iE", "iE9"];
 //# sourceMappingURL=isSupported.js.map

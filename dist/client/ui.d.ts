@@ -29,7 +29,7 @@ export declare class Ui {
     openOverlay(): void;
     togglePopup(): void;
     updateUI(ViewClass: ViewConstructor<AbstractView>, data?: any): void;
-    showError(...message: string[]): void;
+    showError(message: string, canDismiss?: boolean): void;
     setErrorRetryCallback(retryCallback?: Function): void;
     showLoader(...message: string[]): void;
     dismissLoader(): void;

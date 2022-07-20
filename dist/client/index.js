@@ -55,7 +55,8 @@ import { Authenticator } from "@tokenscript/attestation";
 import { TokenStore } from "./tokenStore";
 import { SignedUNChallenge } from "./auth/signedUNChallenge";
 import { TicketZKProof } from "./auth/ticketZKProof";
-import { isUserAgentSupported } from './../utils/support/isSupported';
+import { isUserAgentSupported, unSupportedUserAgents } from './../utils/support/isSupported';
+import { getBrowserData } from "../utils/support/getBrowserData";
 if (typeof window !== "undefined")
     window.tn = { version: "2.0.0" };
 var defaultConfig = {
@@ -242,30 +243,54 @@ var Client = (function () {
     Client.prototype.negotiate = function (issuers, openPopup) {
         if (openPopup === void 0) { openPopup = false; }
         return __awaiter(this, void 0, void 0, function () {
+            var isBrowserSupported;
+            var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
+                    case 0: return [4, this.checkBrowserSupport()];
+                    case 1:
+                        isBrowserSupported = _a.sent();
+                        if (!isBrowserSupported) {
+                            this.ui = new Ui(this.config.uiOptions, this);
+                            this.ui.initialize();
+                            this.ui.openOverlay();
+                            setTimeout(function () {
+                                _this.ui.showError("This browser is not supported. Please try using Chrome, Edge, FireFox or Safari.", false);
+                                _this.ui.viewContainer.style.display = 'none';
+                            }, 1000);
+                            return [2];
+                        }
                         if (issuers)
                             this.tokenStore.updateIssuers(issuers);
                         requiredParams(Object.keys(this.tokenStore.getCurrentIssuers()).length, "issuers are missing.");
-                        if (!(this.config.type === "active")) return [3, 2];
+                        if (!(this.config.type === "active")) return [3, 3];
                         this.issuersLoaded = false;
                         this.activeNegotiationStrategy(openPopup);
                         return [4, this.enrichTokenLookupDataOnChainTokens()];
-                    case 1:
+                    case 2:
                         _a.sent();
-                        return [3, 5];
-                    case 2: return [4, this.enrichTokenLookupDataOnChainTokens()];
-                    case 3:
-                        _a.sent();
-                        return [4, this.passiveNegotiationStrategy()];
+                        return [3, 6];
+                    case 3: return [4, this.enrichTokenLookupDataOnChainTokens()];
                     case 4:
                         _a.sent();
-                        _a.label = 5;
-                    case 5: return [2];
+                        return [4, this.passiveNegotiationStrategy()];
+                    case 5:
+                        _a.sent();
+                        _a.label = 6;
+                    case 6: return [2];
                 }
             });
         });
+    };
+    Client.prototype.checkBrowserSupport = function () {
+        var supported = true;
+        var browserData = getBrowserData();
+        for (var browser in browserData) {
+            if (browserData[browser] && unSupportedUserAgents.includes(browser)) {
+                supported = false;
+            }
+        }
+        return supported;
     };
     Client.prototype.activeNegotiationStrategy = function (openPopup) {
         var autoOpenPopup;

@@ -35,6 +35,7 @@ export declare class Client {
     setPassiveNegotiationWebTokens(): Promise<void>;
     enrichTokenLookupDataOnChainTokens(): Promise<void>;
     negotiate(issuers?: OnChainTokenConfig | OffChainTokenConfig[], openPopup?: boolean): Promise<void>;
+    checkBrowserSupport(): boolean;
     activeNegotiationStrategy(openPopup: boolean): void;
     private cancelAutoload;
     tokenAutoLoad(onLoading: (issuer: string) => void, onComplete: (issuer: string, tokens: any[]) => void): Promise<void>;

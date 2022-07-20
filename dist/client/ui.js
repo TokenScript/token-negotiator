@@ -83,15 +83,15 @@ var Ui = (function () {
         this.currentView = new ViewClass(this.client, this, this.viewContainer, { options: this.options, data: data });
         this.currentView.render();
     };
-    Ui.prototype.showError = function () {
-        var message = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            message[_i] = arguments[_i];
-        }
+    Ui.prototype.showError = function (message, canDismiss) {
+        if (canDismiss === void 0) { canDismiss = true; }
         this.loadContainer.querySelector('.loader-tn').style.display = 'none';
         this.retryButton.style.display = 'block';
-        this.loadContainer.querySelector('.loader-msg-tn').innerHTML = message.join("\n");
+        this.loadContainer.querySelector('.loader-msg-tn').innerHTML = message;
         this.loadContainer.style.display = 'flex';
+        if (!canDismiss) {
+            this.loadContainer.querySelector('.dismiss-error-tn').style.display = 'none';
+        }
     };
     Ui.prototype.setErrorRetryCallback = function (retryCallback) {
         this.retryCallback = retryCallback;

@@ -11,7 +11,8 @@ import {OffChainTokenConfig, OnChainTokenConfig, AuthenticateInterface, Negotiat
 import {SignedUNChallenge} from "./auth/signedUNChallenge";
 import {TicketZKProof} from "./auth/ticketZKProof";
 import {AuthenticationMethod, AuthenticationResult} from "./auth/abstractAuthentication";
-import { isUserAgentSupported } from './../utils/support/isSupported';
+import { isUserAgentSupported, unSupportedUserAgents } from './../utils/support/isSupported';
+import { getBrowserData } from "../utils/support/getBrowserData";
 
 // @ts-ignore
 if(typeof window !== "undefined") window.tn = { version: "2.0.0" };
@@ -182,6 +183,22 @@ export class Client {
 
 	async negotiate(issuers?: OnChainTokenConfig | OffChainTokenConfig[], openPopup = false) {
 
+		const isBrowserSupported = await this.checkBrowserSupport();
+
+		if (!isBrowserSupported) {
+
+			this.ui = new Ui(this.config.uiOptions, this);
+			this.ui.initialize();
+			this.ui.openOverlay();
+
+			setTimeout(() => {
+				this.ui.showError("This browser is not supported. Please try using Chrome, Edge, FireFox or Safari.", false);
+				this.ui.viewContainer.style.display = 'none';
+			}, 1000);
+	
+			return;
+		}
+
 		if (issuers) this.tokenStore.updateIssuers(issuers);
 
 		requiredParams(Object.keys(this.tokenStore.getCurrentIssuers()).length, "issuers are missing.");
@@ -202,6 +219,19 @@ export class Client {
 
 			await this.passiveNegotiationStrategy();
 		}
+	}
+
+	checkBrowserSupport(): boolean {
+		let supported = true;
+		const browserData = getBrowserData()
+
+		for (const browser in browserData) {
+			if (browserData[browser] && unSupportedUserAgents.includes(browser)) {
+				supported = false;
+			}
+		}
+	
+		return supported; 
 	}
 
 	activeNegotiationStrategy(openPopup: boolean) {
