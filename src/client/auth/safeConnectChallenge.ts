@@ -3,11 +3,16 @@ import {AuthenticateInterface, OffChainTokenConfig, OnChainTokenConfig} from "..
 import Web3WalletProvider from "../../wallet/Web3WalletProvider";
 import {SafeConnectProvider} from "../../wallet/SafeConnectProvider";
 
+/**
+ * @deprecated
+ */
 export class SafeConnectChallenge extends AbstractAuthentication implements AuthenticationMethod {
 
 	TYPE = "scChallenge";
 
-	async getTokenProof(issuerConfig: OnChainTokenConfig | OffChainTokenConfig, _tokens: Array<any>, web3WalletProvider: Web3WalletProvider, _request: AuthenticateInterface): Promise<AuthenticationResult> {
+	async getTokenProof(issuerConfig: OnChainTokenConfig | OffChainTokenConfig, _tokens: Array<any>, _request: AuthenticateInterface): Promise<AuthenticationResult> {
+
+		let web3WalletProvider = await this.client.getWalletProvider();
 
 		if (!web3WalletProvider.safeConnectAvailable())
 			throw new Error("Safe connect is not available");

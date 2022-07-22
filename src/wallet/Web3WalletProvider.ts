@@ -1,17 +1,20 @@
 import { ethers } from "ethers";
 import { logger } from "../utils";
 import {SafeConnectOptions} from "./SafeConnectProvider";
+import {Client} from "../client";
 
 export class Web3WalletProvider {
 
 	state: any;
 	safeConnectOptions?: SafeConnectOptions;
+	client: Client;
 
-	constructor(safeConnectUrl?: SafeConnectOptions) {
+	constructor(client: Client, safeConnectOptions?: SafeConnectOptions) {
 
 		this.state = { addresses: [ /* { address, chainId, provider } */ ] };
 
-		this.safeConnectOptions = safeConnectUrl;
+		this.client = client;
+		this.safeConnectOptions = safeConnectOptions;
 	}
 
 	async connectWith ( walletType: string ) {
@@ -155,8 +158,6 @@ export class Web3WalletProvider {
 
 		const address = await provider.initSafeConnect();
 
-		console.log(address);
-
 		this.registerNewWalletAddress(address, "1", provider);
 
 		return address;
@@ -170,7 +171,7 @@ export class Web3WalletProvider {
 
 		const {SafeConnectProvider} = await import("./SafeConnectProvider");
 
-		return new SafeConnectProvider(this.safeConnectOptions);
+		return new SafeConnectProvider(this.client.getUi(), this.safeConnectOptions);
 	}
 
 	// async Fortmatic () {

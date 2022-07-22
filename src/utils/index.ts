@@ -17,7 +17,7 @@ if (process && process.env && process.env.DISPLAY_DEBUG_LEVEL) {
 	displayDebugLevel = parseInt(window.DISPLAY_DEBUG_LEVEL);
 }
 
-export function logger(level:number, ...args: any[]){
+export function logger(level: number, ...args: any[]){
 	if (!displayDebugLevel || level > displayDebugLevel) return;
 	console.log(...args);
 }
@@ -66,21 +66,6 @@ export const base64ToUint8array = (base64str: string) => {
   
 	return Uint8Array.from(Buffer.from(base64str, 'base64'));
 
-}
-
-export const asyncHandle = async (promise: any) => {
-  
-	try {
-  
-		const data = await promise;
-  
-		return [data, undefined];
-  
-	} catch (error) {
-  
-		return [undefined, error];
-	}
-  
 }
 
 export const attachPostMessageListener = (listener: any) => {

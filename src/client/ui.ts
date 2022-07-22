@@ -1,7 +1,7 @@
 import {Start} from './views/start';
 
 import {logger, requiredParams} from "../utils";
-import {Client} from "./index";
+import {Client, ClientError} from "./index";
 import {ViewInterface, ViewConstructor, AbstractView} from "./views/view-interface";
 
 export type UIType = "popup" | "inline"; // TODO: implement modal too
@@ -169,12 +169,19 @@ export class Ui {
 
 	}
 
-	showError(...message: string[]){
+	showError(error: string | Error){
+
+		if (typeof error !== "string"){
+			if (error.name === ClientError.USER_ABORT){
+				return this.dismissLoader();
+			}
+			error = error.message ? error.message : error.toString();
+		}
 
 		this.loadContainer.querySelector('.loader-tn').style.display = 'none';
 		this.retryButton.style.display = 'block';
 
-		this.loadContainer.querySelector('.loader-msg-tn').innerHTML = message.join("\n");
+		this.loadContainer.querySelector('.loader-msg-tn').innerHTML = error;
 
 		this.loadContainer.style.display = 'flex';
 	}

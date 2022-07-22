@@ -1,8 +1,7 @@
 // @ts-nocheck
-import {OutletAction, OutletResponseAction} from "./messaging";
-import { Messaging } from "../core/messaging";
+import {OutletAction, OutletResponseAction, Messaging} from "./messaging";
 import { Ui } from "./ui";
-import { asyncHandle, logger, requiredParams } from "../utils";
+import { logger, requiredParams } from "../utils";
 import {getNftCollection, getNftTokens} from "../utils/token/nftProvider";
 import "./../vendor/keyShape";
 import { Authenticator } from "@tokenscript/attestation";
@@ -10,8 +9,10 @@ import {TokenStore} from "./tokenStore";
 import {OffChainTokenConfig, OnChainTokenConfig, AuthenticateInterface, NegotiationInterface} from "./interface";
 import {SignedUNChallenge} from "./auth/signedUNChallenge";
 import {TicketZKProof} from "./auth/ticketZKProof";
-import {AuthenticationMethod, AuthenticationResult} from "./auth/abstractAuthentication";
-import { isUserAgentSupported } from './../utils/support/isSupported';
+import {AuthenticationMethod} from "./auth/abstractAuthentication";
+import { isUserAgentSupported } from '../utils/support/isSupported';
+import {SelectWallet} from "./views/select-wallet";
+import {SelectIssuers} from "./views/select-issuers";
 
 // @ts-ignore
 if(typeof window !== "undefined") window.tn = { version: "2.0.0" };
@@ -42,6 +43,16 @@ const defaultConfig: NegotiationInterface = {
 export const enum UIUpdateEventType {
 	ISSUERS_LOADING,
 	ISSUERS_LOADED
+}
+
+export enum ClientError {
+	POPUP_BLOCKED = "POPUP_BLOCKED",
+	USER_ABORT = "USER_ABORT"
+}
+
+export enum ClientErrorMessage {
+	POPUP_BLOCKED = "Please add an exception to your popup blocker before continuing.",
+	USER_ABORT = "The user aborted the process."
 }
 
 export class Client {
@@ -97,11 +108,11 @@ export class Client {
 		return this.config.safeConnectOptions !== undefined;
 	}
 
-	private async getWalletProvider(){
+	public async getWalletProvider(){
 
 		if (!this.web3WalletProvider){
 			const {Web3WalletProvider} = await import("./../wallet/Web3WalletProvider");
-			this.web3WalletProvider = new Web3WalletProvider(this.config.safeConnectOptions);
+			this.web3WalletProvider = new Web3WalletProvider(this, this.config.safeConnectOptions);
 		}
 
 		return this.web3WalletProvider;
@@ -116,38 +127,6 @@ export class Client {
 		logger(2, "wallet address found: " + walletAddress);
 
 		return walletAddress;
-	}
-
-	async setPassiveNegotiationWebTokens() {
-
-		let issuers = this.tokenStore.getCurrentIssuers(false);
-
-		for (let issuer in issuers){
-
-			let res;
-
-			const issuerConfig = this.tokenStore.getCurrentIssuers()[issuer] as OffChainTokenConfig;
-
-			try {
-				res = await this.messaging.sendMessage({
-					action: OutletAction.GET_ISSUER_TOKENS,
-					origin: issuerConfig.tokenOrigin,
-					data: {
-						issuer: issuer,
-						filter: issuerConfig.filters
-					}
-				}, this.config.messagingForceTab);
-			} catch (err) {
-				logger(2,err);
-				continue;
-			}
-
-			logger(2,"tokens:");
-			logger(2,res.data.tokens);
-
-			this.tokenStore.setTokens(issuer, res.data.tokens);
-
-		}
 	}
 
 	async enrichTokenLookupDataOnChainTokens() {
@@ -249,7 +228,9 @@ export class Client {
 
 				onComplete(issuerKey, tokens)
 			} catch (e){
-				console.log("Failed to load " + issuerKey + ": " + e);
+				e.message = "Failed to load " + issuerKey + ": " + e.message;
+				logger(2, e.message);
+				this.eventSender.emitErrorToClient(e, issuerKey);
 				onComplete(issuerKey, null);
 			}
 
@@ -264,6 +245,40 @@ export class Client {
 		this.cancelAutoload = true;
 	}
 
+	async setPassiveNegotiationWebTokens() {
+
+		let issuers = this.tokenStore.getCurrentIssuers(false);
+
+		for (let issuer in issuers){
+
+			let res;
+
+			const issuerConfig = this.tokenStore.getCurrentIssuers()[issuer] as OffChainTokenConfig;
+
+			try {
+				res = await this.messaging.sendMessage({
+					action: OutletAction.GET_ISSUER_TOKENS,
+					origin: issuerConfig.tokenOrigin,
+					data: {
+						issuer: issuer,
+						filter: issuerConfig.filters
+					}
+				}, this.config.messagingForceTab);
+			} catch (err) {
+				logger(2,err);
+				console.log("popup error");
+				this.eventSender.emitErrorToClient(err, issuer);
+				continue;
+			}
+
+			logger(2,"tokens:");
+			logger(2,res.data.tokens);
+
+			this.tokenStore.setTokens(issuer, res.data.tokens);
+
+		}
+	}
+
 	async setPassiveNegotiationOnChainTokens() {
 
 		let issuers = this.tokenStore.getCurrentIssuers(true);
@@ -273,23 +288,25 @@ export class Client {
 
 			let issuer = issuers[issuerKey];
 
-			const tokens = await getNftTokens(
-				issuer,
-				walletProvider.getConnectedWalletData()[0].address
-			);
+			try {
+				const tokens = await getNftTokens(
+					issuer,
+					walletProvider.getConnectedWalletData()[0].address
+				);
 
-			this.tokenStore.setTokens(issuerKey, tokens);
+				this.tokenStore.setTokens(issuerKey, tokens);
+			} catch (e){
+				logger(2,err);
+				this.eventSender.emitErrorToClient(err, issuerKey);
+			}
 		}
 	}
 
 	async passiveNegotiationStrategy() {
 
-		await asyncHandle(
-			this.setPassiveNegotiationWebTokens()
-		);
-		await asyncHandle(
-			this.setPassiveNegotiationOnChainTokens()
-		);
+		await this.setPassiveNegotiationWebTokens();
+
+		await this.setPassiveNegotiationOnChainTokens();
 
 		let tokens = this.tokenStore.getCurrentTokens();
 
@@ -304,7 +321,7 @@ export class Client {
 
 		// Feature not supported when an end users third party cookies are disabled
 		// because the use of a tab requires a user gesture.
-		if (this.messaging.iframeStorageSupport === false && Object.keys(this.tokenStore.getCurrentTokens(false)).length === 0)
+		if (this.messaging.core.iframeStorageSupport === false && Object.keys(this.tokenStore.getCurrentTokens(false)).length === 0)
 			logger(2,
 				"iFrame storage support not detected: Enable popups via your browser to access off-chain tokens with this negotiation type."
 			);
@@ -341,7 +358,7 @@ export class Client {
 					issuer: issuer,
 					filter: config.filters
 				},
-			}, this.config.messagingForceTab);
+			}, this.config.messagingForceTab, this.ui);
 
 			tokens = res.data.tokens;
 
@@ -405,7 +422,7 @@ export class Client {
 			AuthType = config.onChain ? SignedUNChallenge : TicketZKProof;
 		}
 
-		let authenticator: AuthenticationMethod = new AuthType();
+		let authenticator: AuthenticationMethod = new AuthType(this);
 
 		let res;
 
@@ -415,7 +432,7 @@ export class Client {
 
 			authRequest.options?.messagingForceTab = this.config.messagingForceTab;
 
-			res = await authenticator.getTokenProof(config, [authRequest.unsignedToken], this.web3WalletProvider, authRequest);
+			res = await authenticator.getTokenProof(config, [authRequest.unsignedToken], authRequest);
 
 			logger(2,"Ticket proof successfully validated.");
 
@@ -423,6 +440,12 @@ export class Client {
 
 		} catch (err) {
 			logger(2,err);
+
+			if (err.message === "WALLET_REQUIRED"){
+				if (timer) clearTimeout(timer);
+				return this.handleWalletRequired(authRequest);
+			}
+
 			this.handleProofError(err, issuer);
 			throw err;
 		}
@@ -436,8 +459,33 @@ export class Client {
 		return res.data;
 	}
 
+	private async handleWalletRequired(authRequest){
+
+		if (this.ui) {
+			this.ui.dismissLoader();
+			this.ui.openOverlay();
+		} else {
+			// TODO: Show wallet selection modal for passive mode or emit event instead of connecting metamask automatically
+			let walletProvider = await this.getWalletProvider();
+			await walletProvider.connectWith("MetaMask");
+			return this.authenticate(authRequest);
+		}
+
+		return new Promise((resolve, reject) => {
+			this.ui.updateUI(SelectWallet, {connectCallback: async () => {
+				this.ui.updateUI(SelectIssuers);
+				try {
+					let res = await this.authenticate(authRequest);
+					resolve(res);
+				} catch (e){
+					reject(e);
+				}
+			}});
+		});
+	}
+
 	private handleProofError(err, issuer) {
-		if (this.ui) this.ui.showError(err.message ?? err);
+		if (this.ui) this.ui.showError(err);
 		this.eventSender.emitProofToClient(null, issuer, err);
 	}
 
@@ -452,6 +500,9 @@ export class Client {
 		emitProofToClient: (data: any, issuer: any, error = "") => {
 			this.on("token-proof", null, { data, issuer, error });
 		},
+		emitErrorToClient: (error: Error, issuer = "none") => {
+			this.on("error", null, {error, issuer});
+		}
 	};
 
 	async addTokenViaMagicLink(magicLink: any) {

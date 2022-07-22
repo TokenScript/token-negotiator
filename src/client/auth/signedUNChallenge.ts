@@ -9,10 +9,12 @@ export class SignedUNChallenge extends AbstractAuthentication implements Authent
 	TYPE = "signedUN";
 	private static DEFAULT_ENDPOINT = "https://crypto-verify.herokuapp.com/use-devcon-ticket";
 
-	async getTokenProof(_issuerConfig: OnChainTokenConfig | OffChainTokenConfig, _tokens: Array<any>, web3WalletProvider: Web3WalletProvider, request: AuthenticateInterface): Promise<AuthenticationResult> {
+	async getTokenProof(_issuerConfig: OnChainTokenConfig | OffChainTokenConfig, _tokens: Array<any>, request: AuthenticateInterface): Promise<AuthenticationResult> {
+
+		let web3WalletProvider = await this.client.getWalletProvider();
 
 		if (web3WalletProvider.getConnectedWalletData().length === 0){
-			await web3WalletProvider.connectWith("MetaMask");
+			throw new Error("WALLET_REQUIRED");
 		}
 
 		let address = web3WalletProvider.getConnectedWalletData()[0].address;

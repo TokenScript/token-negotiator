@@ -1,21 +1,18 @@
 import {attachPostMessageListener, logger, removePostMessageListener} from "../utils";
+import {ClientError} from "../client";
 
 // TODO move Message related interfaces/enum in to shared location /core 
 
 export interface RequestInterfaceBase {
-    action: MessageActionBase | string,
+    action: string,
 	origin: string,
 	timeout?: number,
 	data: {[key: string]: any}
 }
 
-export enum MessageActionBase {
-    COOKIE_CHECK = "cookie-check"
-}
-
 export interface ResponseInterfaceBase {
     evtid: any,
-    evt: ResponseActionBase | string,
+    evt: string,
     data?: any,
 	errors?: string[]
 }
@@ -37,11 +34,6 @@ declare global {
 export class Messaging {
 
 	iframeStorageSupport: null|boolean = null;
-	rejectHandler: Function|null = null;
-
-	constructor() {
-		// Should we just check cookie support on initialisation or when requested?
-	}
 
 	async sendMessage(request: RequestInterfaceBase, forceTab = false): Promise<ResponseInterfaceBase> {
 
@@ -77,17 +69,14 @@ export class Messaging {
 			let id = Messaging.getUniqueEventId();
 			let url = this.constructUrl(id, request);
 
-			let iframe = this.createIframe();
+			let iframe = this.createIframe(() => {
+				this.removeModal();
+				reject(ClientError.USER_ABORT);
+			});
 
 			this.setResponseListener(id, request.origin, request.timeout, resolve, reject,
-				()=>{
-
-					if (iframe?.parentNode)
-						iframe.parentNode.removeChild(iframe);
-
-					let modal = this.getModal();
-					if (modal)
-						modal.style.display = "none";
+				() => {
+					this.removeModal();
 				},
 				iframe
 			);
@@ -112,13 +101,15 @@ export class Messaging {
 
 			tabRef = this.openTab(this.constructUrl(id, request));
 
+			if (!tabRef || tabRef.closed || typeof tabRef.closed == "undefined"){
+				reject(ClientError.POPUP_BLOCKED);
+				return;
+			}
+
 			let tabCloseCheck = setInterval(()=>{
 				if (!tabRef || tabRef.closed) {
 					clearInterval(tabCloseCheck);
-					if (this.rejectHandler) {
-						this.rejectHandler("Popup closed or blocked");
-						this.rejectHandler = null;
-					}
+					reject(ClientError.USER_ABORT);
 				}
 			}, 500);
 
@@ -130,10 +121,6 @@ export class Messaging {
 
 		let received = false;
 		let timer: any = null;
-		this.rejectHandler = (msg: string) => {
-			reject(msg);
-			afterResolveOrError();
-		};
 
 		let listener = (event: any) => {
 
@@ -162,7 +149,7 @@ export class Messaging {
 					}
 
 					if (response.evt === ResponseActionBase.ERROR) {
-						reject(response.errors);
+						reject(new Error(response.errors.join(". ")));
 					} else if (response.evt === ResponseActionBase.SHOW_FRAME){
 
 						if (iframe) {
@@ -204,11 +191,11 @@ export class Messaging {
 			}, timeout);
 	}
 
-	private getModal(){
+	private getModal(closedCallback?){
 
 		let modal = document.getElementById("modal-tn");
 
-		if (modal)
+		if (modal || !closedCallback)
 			return modal;
 
 		modal = document.createElement('div');
@@ -228,22 +215,18 @@ export class Messaging {
 		document.body.appendChild(modal);
 
 		modal.getElementsByClassName('modal-close-tn')[0].addEventListener('click', () => {
-			if (modal) {
-				modal.style.display = "none";
-				// remove content with iframe, because another iframe will be added next time 
-				let content = modal.querySelector('.modal-body-tn');
-				if (content) {
-					content.innerHTML = "";
-				}
-
-				if (this.rejectHandler) {
-					this.rejectHandler("Popup closed by user");
-					this.rejectHandler = null;
-				}
-			}
+			closedCallback();
 		});
 
 		return modal;
+	}
+
+	private removeModal(){
+		let modal = this.getModal();
+		if (modal) {
+			modal.style.display = "none";
+			modal.remove();
+		}
 	}
 
 	private constructUrl(id: any, request: RequestInterfaceBase){
@@ -277,17 +260,14 @@ export class Messaging {
 		);
 	}
 
-	public createIframe(url?: string) {
+	public createIframe(closeCallback?) {
 
 		const iframe = document.createElement('iframe');
 		iframe.setAttribute('allow',"clipboard-read");
 
-		let modal = this.getModal();
+		let modal = this.getModal(closeCallback);
 
 		modal.getElementsByClassName('modal-body-tn')[0].appendChild(iframe);
-
-		if (url)
-			iframe.src = url;
 
 		return iframe;
 	}

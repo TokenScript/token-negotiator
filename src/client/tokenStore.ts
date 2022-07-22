@@ -33,6 +33,16 @@ export class TokenStore {
 		this.prePopulateTokenLookupStore(issuers);
 	}
 
+	public hasOnChainTokens() {
+
+		for (let i in this.currentIssuers){
+			if (this.currentIssuers[i])
+				return true;
+		}
+
+		return false;
+	}
+
 	public getCurrentIssuers(onChainFilter?: boolean){
 		let current: TokenLookup = {};
 		for (let collectionId in this.currentIssuers){

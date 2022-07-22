@@ -1,5 +1,6 @@
 import {AbstractView} from "./view-interface";
 import {SelectWallet} from "./select-wallet";
+import {SelectIssuers} from "./select-issuers";
 
 export class Start extends AbstractView {
 
@@ -20,7 +21,7 @@ export class Start extends AbstractView {
 	}
 
 	goToWalletSelection(){
-		this.ui.updateUI(SelectWallet);
+		this.ui.updateUI(this.client.getTokenStore().hasOnChainTokens() ? SelectWallet : SelectIssuers);
 	}
 
 }

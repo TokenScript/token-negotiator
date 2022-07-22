@@ -1,5 +1,6 @@
 import {AuthenticateInterface, OffChainTokenConfig, OnChainTokenConfig} from "../interface";
 import Web3WalletProvider from "../../wallet/Web3WalletProvider";
+import {Client} from "../index";
 
 export interface AuthenticationResult {
 	type: string,
@@ -12,7 +13,7 @@ export interface AuthenticationResult {
 
 export interface AuthenticationMethod {
 	TYPE: string;
-	getTokenProof(issuerConfig: OnChainTokenConfig | OffChainTokenConfig, tokens: Array<any>, web3WalletProvider: Web3WalletProvider, request: AuthenticateInterface): Promise<AuthenticationResult>;
+	getTokenProof(issuerConfig: OnChainTokenConfig | OffChainTokenConfig, tokens: Array<any>, request: AuthenticateInterface): Promise<AuthenticationResult>;
 }
 
 export abstract class AbstractAuthentication {
@@ -20,6 +21,12 @@ export abstract class AbstractAuthentication {
 	public abstract TYPE: string;
 
 	public static STORAGE_KEY = "tn-proof";
+
+	protected client: Client;
+
+	constructor(client?: Client) {
+		this.client = client;
+	}
 
 	public saveProof(key: string, proof: AuthenticationResult){
 

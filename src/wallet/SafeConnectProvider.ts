@@ -1,10 +1,12 @@
-import {Messaging, ResponseInterfaceBase} from "../core/messaging";
+import {ResponseInterfaceBase} from "../core/messaging";
+import {Messaging} from "../client/messaging";
 import {uint8tohex} from "@tokenscript/attestation/dist/libs/utils";
 import {KeyStore} from "@tokenscript/attestation/dist/safe-connect/KeyStore";
 import {AbstractAuthentication, AuthenticationResult} from "../client/auth/abstractAuthentication";
 import {AttestedAddress} from "../client/auth/attestedAddress";
 import {UNInterface} from "../client/auth/util/UN";
 import {SafeConnectChallenge} from "../client/auth/safeConnectChallenge";
+import {Ui} from "../client/ui";
 
 export enum SafeConnectAction {
 	CONNECT = "connect",
@@ -20,13 +22,15 @@ export interface SafeConnectOptions {
 
 export class SafeConnectProvider {
 
-	private messaging = new Messaging();
+	private ui: Ui;
 	private keyStore = new KeyStore();
 	private readonly options: SafeConnectOptions;
+	private messaging = new Messaging();
 
 	public static HOLDING_KEY_ALGORITHM = "RSASSA-PKCS1-v1_5";
 
-	constructor(options: SafeConnectOptions) {
+	constructor(ui: Ui, options: SafeConnectOptions) {
+		this.ui = ui;
 		this.options = options;
 	}
 
@@ -37,7 +41,7 @@ export class SafeConnectProvider {
 			origin: this.options.url,
 			timeout: 0,
 			data: (await this.getInitialProofRequest())
-		}, true);
+		}, true, this.ui);
 
 		if (!this.options.initialProof)
 			return res.data.address;
@@ -120,7 +124,7 @@ export class SafeConnectProvider {
 				type: "signed_un",
 				un: encodeURIComponent(JSON.stringify(un))
 			}
-		}, true);
+		}, true, this.ui);
 
 		return res.data.data.signature;
 	}

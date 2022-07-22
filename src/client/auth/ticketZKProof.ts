@@ -1,9 +1,7 @@
 import {AbstractAuthentication, AuthenticationMethod, AuthenticationResult} from "./abstractAuthentication";
 import {AuthenticateInterface, OffChainTokenConfig, OnChainTokenConfig} from "../interface";
-import Web3WalletProvider from "../../wallet/Web3WalletProvider";
-import {OutletAction} from "../messaging";
+import {OutletAction, Messaging} from "../messaging";
 import {Authenticator} from "@tokenscript/attestation";
-import {Messaging} from "../../core/messaging";
 import {SignedUNChallenge} from "./signedUNChallenge";
 import {UNInterface} from "./util/UN";
 
@@ -13,7 +11,7 @@ export class TicketZKProof extends AbstractAuthentication implements Authenticat
 
 	private messaging = new Messaging();
 
-	async getTokenProof(issuerConfig: OnChainTokenConfig | OffChainTokenConfig, tokens: Array<any>, web3WalletProvider: Web3WalletProvider, request: AuthenticateInterface): Promise<AuthenticationResult> {
+	async getTokenProof(issuerConfig: OnChainTokenConfig | OffChainTokenConfig, tokens: Array<any>, request: AuthenticateInterface): Promise<AuthenticationResult> {
 
 		if (issuerConfig.onChain === true)
 			throw new Error(this.TYPE + " is not available for off-chain tokens.");
@@ -21,14 +19,16 @@ export class TicketZKProof extends AbstractAuthentication implements Authenticat
 		let useEthKey: UNInterface|null = null;
 
 		if (issuerConfig.unEndPoint) {
-			let unChallenge = new SignedUNChallenge();
+			let unChallenge = new SignedUNChallenge(this.client);
 			request.options = {
 				...request.options,
 				unEndPoint: issuerConfig.unEndPoint
 			};
-			let unRes = await unChallenge.getTokenProof(issuerConfig, tokens, web3WalletProvider, request);
+			let unRes = await unChallenge.getTokenProof(issuerConfig, tokens, request);
 			useEthKey = unRes.data as UNInterface;
 		}
+
+		console.log("Sending attestation.id");
 
 		let res = await this.messaging.sendMessage({
 			action: OutletAction.GET_PROOF,
@@ -40,7 +40,7 @@ export class TicketZKProof extends AbstractAuthentication implements Authenticat
 				address: request.address ? request.address : "",
 				wallet: request.wallet ? request.wallet : ""
 			}
-		}, request.options.messagingForceTab);
+		}, request.options.messagingForceTab, this.client.getUi());
 
 		if (!res.data.proof)
 			throw new Error("Failed to get proof from the outlet.");
