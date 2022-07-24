@@ -45,12 +45,15 @@
                     position: "bottom-right"
                 },
                 unSupportedUserAgent: {
-                    config: {
-                        // options to test against : ["iE", "iE9", "edge", "chrome", "phantomJS", "fireFox", "safari", "android", "iOS", "mac", "windows", "webView", "touchDevice", "metaMask", "alphaWallet", "mew", "trust", "goWallet", "status", "imToken", "metaMaskAndroid", "alphaWalletAndroid", "mewAndroid", "imTokenAndroid"];
-                        // metaMaskAndroid: true,
-                        // alphaWalletAndroid: true,
-                        // mewAndroid: true,
-                        // imTokenAndroid: true,
+                    authentication: {
+                        config: {
+                            // options to test against : ["iE", "iE9", "edge", "chrome", "phantomJS", "fireFox", "safari", "android", "iOS", "mac", "windows", "webView", "touchDevice", "metaMask", "alphaWallet", "mew", "trust", "goWallet", "status", "imToken", "metaMaskAndroid", "alphaWalletAndroid", "mewAndroid", "imTokenAndroid"];
+                            // metaMaskAndroid: true,
+                            // alphaWalletAndroid: true,
+                            // mewAndroid: true,
+                            // imTokenAndroid: true,
+                        },
+                        warningMessage: "No Support for Authentication with this user agent. Try Chrome, Safari or Edge instead."
                     }
                 }
             });

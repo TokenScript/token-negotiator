@@ -110,13 +110,16 @@ Include the following Javascript to configure the Token Negotiator with issuers 
         position: "bottom-right"
     },
     unSupportedUserAgent: {
+      authentication: {
         config: {
-            // options to test against : ["iE", "iE9", "edge", "chrome", "phantomJS", "fireFox", "safari", "android", "iOS", "mac", "windows", "webView", "touchDevice", "metaMask", "alphaWallet", "mew", "trust", "goWallet", "status", "imToken", "metaMaskAndroid", "alphaWalletAndroid", "mewAndroid", "imTokenAndroid"];
+            // all options: ["iE", "iE9", "edge", "chrome", "phantomJS", "fireFox", "safari", "android", "iOS", "mac", "windows", "webView", "touchDevice", "metaMask", "alphaWallet", "mew", "trust", "goWallet", "status", "imToken", "metaMaskAndroid", "alphaWalletAndroid", "mewAndroid", "imTokenAndroid"];
             metaMaskAndroid: true,
             alphaWalletAndroid: true,
             mewAndroid: true,
             imTokenAndroid: true,
-        }
+        },
+        warningMessage: "Cannot fully authenticate tokens using this user agent, please try Chrome, Firefox, Safari or Edge."
+      }
     }
   });
 
@@ -361,8 +364,8 @@ This table lists all possible configuration options for Token Negotiator client.
 | messagingForceTab                 | Whether to use a tab rather than an iframe for communication with off-chain ticket issuers.                                                                                                                                                                    | N        | boolean                                       | false                                    |
 | **safeConnectOptions**            | (Experimental) Options for STL product integration                                                                                                                                                                                                             | N        | SafeConnectOptions                            |                                          |
 | **unSupportedUserAgent**          | (Temporary) Options to define browsers that are unsupported or blocked in negotiator                                                                                                                                                                           | N        |                                               |                                          |
-| unSupportedUserAgent.config       | Browsers that are unsupported.                                                                                                                                                                                                                                 | Y        | BrowserDataInterface                          |                                          |
-| unSupportedUserAgent.errorMessage | Error message to show for unsupported browsers.                                                                                                                                                                                                                | Y        | string                                        |                                          |
+| unSupportedUserAgent.type.config       | Browsers that are unsupported.                                                                                                                                                                                                                                 | Y        | BrowserDataInterface                          |                                          |
+| unSupportedUserAgent.type.errorMessage | Error message to show for unsupported browsers.                                                                                                                                                                                                                | Y        | string                                        |                                          |
 
 ### Issuer Configuration
 
