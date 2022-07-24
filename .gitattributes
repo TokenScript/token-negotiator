@@ -1,0 +1,2 @@
+# allow the incoming changes to override /dist folder without conflicts raised
+dist/ merge=ours
