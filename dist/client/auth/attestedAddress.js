@@ -50,13 +50,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import { AbstractAuthentication } from "./abstractAuthentication";
-import { AsnParser, AsnSerializer } from "@peculiar/asn1-schema";
-import { base64ToUint8array, hexStringToUint8, uint8arrayToBase64 } from "@tokenscript/attestation/dist/libs/utils";
-import { SignedLinkedAttestation } from "@tokenscript/attestation/dist/asn1/shemas/SignedLinkedAttestation";
-import { EthereumKeyLinkingAttestation, SignedEthereumKeyLinkingAttestation } from "@tokenscript/attestation/dist/asn1/shemas/EthereumKeyLinkingAttestation";
-import { EpochTimeValidity } from "@tokenscript/attestation/dist/asn1/shemas/EpochTimeValidity";
-import { SafeConnectProvider } from "../../wallet/SafeConnectProvider";
-import { AlgorithmIdentifierASN } from "@tokenscript/attestation/dist/asn1/shemas/AuthenticationFramework";
+import { EthereumKeyLinkingAttestation } from "@tokenscript/attestation/dist/safe-connect/EthereumKeyLinkingAttestation";
 var AttestedAddress = (function (_super) {
     __extends(AttestedAddress, _super);
     function AttestedAddress() {
@@ -110,34 +104,16 @@ var AttestedAddress = (function (_super) {
     };
     AttestedAddress.createAndSignLinkAttestation = function (addressAttest, linkedEthAddress, holdingPrivKey) {
         return __awaiter(this, void 0, void 0, function () {
-            var addressAttestObj, linkAttest, linkAttestInfo, linkSig, encodedLinkAttest;
+            var linkAttest;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        addressAttestObj = AsnParser.parse(base64ToUint8array(addressAttest), SignedLinkedAttestation);
-                        console.log("Decoded address attestation");
-                        console.log(addressAttestObj);
-                        linkAttest = new SignedEthereumKeyLinkingAttestation();
-                        linkAttest.ethereumKeyLinkingAttestation = new EthereumKeyLinkingAttestation();
-                        linkAttest.ethereumKeyLinkingAttestation.subjectEthereumAddress = hexStringToUint8(linkedEthAddress);
-                        linkAttest.ethereumKeyLinkingAttestation.linkedAttestation = addressAttestObj;
-                        linkAttest.ethereumKeyLinkingAttestation.validity = new EpochTimeValidity();
-                        linkAttest.ethereumKeyLinkingAttestation.validity.notBefore = Math.round(Date.now() / 1000);
-                        linkAttest.ethereumKeyLinkingAttestation.validity.notAfter = Math.round((Date.now() / 1000) + 3600);
-                        linkAttestInfo = AsnSerializer.serialize(linkAttest.ethereumKeyLinkingAttestation);
-                        return [4, window.crypto.subtle.sign({
-                                name: SafeConnectProvider.HOLDING_KEY_ALGORITHM,
-                                saltLength: 128,
-                            }, holdingPrivKey, linkAttestInfo)];
+                        linkAttest = new EthereumKeyLinkingAttestation();
+                        linkAttest.create(addressAttest, linkedEthAddress, 3600);
+                        return [4, linkAttest.sign(holdingPrivKey)];
                     case 1:
-                        linkSig = _a.sent();
-                        linkAttest.signingAlgorithm = new AlgorithmIdentifierASN();
-                        linkAttest.signingAlgorithm.algorithm = "1.2.840.113549.1.1.11";
-                        linkAttest.signatureValue = new Uint8Array(linkSig);
-                        encodedLinkAttest = new Uint8Array(AsnSerializer.serialize(linkAttest));
-                        console.log("Constructed link attestation: ");
-                        console.log(linkAttest);
-                        return [2, uint8arrayToBase64(encodedLinkAttest)];
+                        _a.sent();
+                        return [2, linkAttest.getBase64()];
                 }
             });
         });

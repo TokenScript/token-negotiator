@@ -5,3 +5,15 @@ _bundles
 docs
 token-negotiator-dist
 reports
+.eslintignore                                 
+.eslintrc                                     
+.github
+babel.config.js
+jest.config.js                                
+junit.xml                                     
+mock-images
+package.json                                  
+tsconfig.build.json                           
+tsconfig.json                                 
+tslint.json                                   
+webpack.config.js 

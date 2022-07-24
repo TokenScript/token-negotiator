@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import { Messaging } from "../core/messaging";
 import { uint8tohex } from "@tokenscript/attestation/dist/libs/utils";
-import { KeyStore } from "../client/auth/util/KeyStore";
+import { KeyStore } from "@tokenscript/attestation/dist/safe-connect/KeyStore";
 import { AttestedAddress } from "../client/auth/attestedAddress";
 import { SafeConnectChallenge } from "../client/auth/safeConnectChallenge";
 export var SafeConnectAction;
@@ -146,8 +146,7 @@ var SafeConnectProvider = (function () {
                         }, true)];
                     case 1:
                         res = _a.sent();
-                        console.log(res);
-                        return [2, res.data.signature];
+                        return [2, res.data.data.signature];
                 }
             });
         });

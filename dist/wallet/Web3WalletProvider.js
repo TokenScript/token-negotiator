@@ -81,36 +81,6 @@ var Web3WalletProvider = (function () {
         this.state.addresses.push({ address: address, chainId: chainId, provider: provider });
         return this.state.addresses;
     };
-    Web3WalletProvider.prototype.getWeb3ChainId = function (web3) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                return [2, web3.eth.getChainId()];
-            });
-        });
-    };
-    Web3WalletProvider.prototype.getWeb3Accounts = function (web3) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                return [2, web3.eth.getAccounts()];
-            });
-        });
-    };
-    Web3WalletProvider.prototype.getWeb3ChainIdAndAccounts = function (web3) {
-        return __awaiter(this, void 0, void 0, function () {
-            var chainId, accounts;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, this.getWeb3ChainId(web3)];
-                    case 1:
-                        chainId = _a.sent();
-                        return [4, this.getWeb3Accounts(web3)];
-                    case 2:
-                        accounts = _a.sent();
-                        return [2, { chainId: chainId, accounts: accounts }];
-                }
-            });
-        });
-    };
     Web3WalletProvider.prototype.MetaMask = function () {
         return __awaiter(this, void 0, void 0, function () {
             var accounts, hexChainId, accountAddress;
@@ -162,27 +132,29 @@ var Web3WalletProvider = (function () {
     };
     Web3WalletProvider.prototype.Torus = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var TorusProvider, torus, web3, _a, accounts, chainId, registeredWalletAddress;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var TorusProvider, torus, provider, accounts;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0: return [4, import("./TorusProvider")];
                     case 1:
-                        TorusProvider = _b.sent();
+                        TorusProvider = _a.sent();
                         return [4, TorusProvider.getTorusProviderInstance()];
                     case 2:
-                        torus = _b.sent();
+                        torus = _a.sent();
                         return [4, torus.init()];
                     case 3:
-                        _b.sent();
+                        _a.sent();
                         return [4, torus.login()];
                     case 4:
-                        _b.sent();
-                        web3 = new ethers.providers.Web3Provider(torus.provider);
-                        return [4, this.getWeb3ChainIdAndAccounts(web3)];
+                        _a.sent();
+                        provider = new ethers.providers.Web3Provider(torus.provider);
+                        return [4, provider.listAccounts()];
                     case 5:
-                        _a = _b.sent(), accounts = _a.accounts, chainId = _a.chainId;
-                        registeredWalletAddress = this.registerNewWalletAddress(accounts[0], chainId, torus.provider);
-                        return [2, registeredWalletAddress];
+                        accounts = _a.sent();
+                        if (accounts.length === 0) {
+                            throw new Error("No accounts found via wallet-connect.");
+                        }
+                        return [2, this.registerNewWalletAddress(accounts[0], '1', torus.provider)];
                 }
             });
         });
